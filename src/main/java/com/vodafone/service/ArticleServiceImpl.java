@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.vodafone.errorhandlling.ConflictException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
@@ -21,26 +22,30 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Service
 @Transactional
-public class ArticleServiceImpl implements ArticleService
-{
-    @Autowired
+public class ArticleServiceImpl implements ArticleService {
+
     ArticleRepository articleRepository;
 
+    public ArticleServiceImpl(ArticleRepository articleRepository) {
+        this.articleRepository = articleRepository;
+    }
 
     @Override
     public List<Article> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
-        for (Article article : articles)
+        for (Article article : articles) {
             addLinks(article);
-
+        }
         return articles;
     }
 
     @Override
     public Article getArticleById(Integer id) {
         Optional<Article> article = articleRepository.findById(id);
-        if (article.isPresent())
+        if (article.isPresent()) {
+            addLinks(article.get());
             return article.get();
+        }
 
         throw new NotFoundException(String.format("The Article with id '%s' was not found", id));
     }
@@ -55,9 +60,8 @@ public class ArticleServiceImpl implements ArticleService
     }
 
     @Override
-    public boolean doesArticleExist(String name)
-    {
-        return  articleRepository.findByName(name).isPresent();
+    public boolean doesArticleExist(String name) {
+        return articleRepository.findByName(name).isPresent();
     }
 
     @Override
@@ -69,12 +73,16 @@ public class ArticleServiceImpl implements ArticleService
 
     @Override
     public Article addArticle(Article article) {
-        return articleRepository.save(article);
+        if (!doesArticleExist(article.getName()))
+            return articleRepository.save(article);
+
+        throw new ConflictException(String.format("Article with name %s already exists", article.getName()));
     }
 
     @Override
     public void deleteArticle(Integer id) {
-       boolean doesNotExist = getArticleById(id) == null;// This already throws NotFoundException
+        if (getArticleById(id) == null) // This already throws NotFoundException
+            throw new NotFoundException("Delete Article Not Found ID");
 
         articleRepository.deleteById(id);
     }
@@ -82,7 +90,7 @@ public class ArticleServiceImpl implements ArticleService
     @Override
     public Article updateArticle(Integer id, Article article) {
         if (getArticleById(id) == null) // This already throws NotFoundException
-            return null;
+            throw new NotFoundException("Updating Article Not Found ID");
 
         article.setId(id);
         return articleRepository.save(article);
