@@ -16,8 +16,11 @@ import java.util.Optional;
 @Transactional
 public class AuthorServiceImpl implements AuthorService
 {
-    @Autowired
     AuthorRepository repo;
+
+    public AuthorServiceImpl(AuthorRepository repo) {
+        this.repo = repo;
+    }
 
     @Override
     public List<Author> getAllAuthors() {
