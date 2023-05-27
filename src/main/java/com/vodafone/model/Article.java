@@ -18,8 +18,6 @@ public class Article{
 
     private int authorId;
 
-
-
     @JsonProperty("_links")
     @Transient
     private List<Links> links;
