@@ -16,8 +16,11 @@ import java.util.List;
 @RequestMapping(value = "/v1")
 public class ArticlesController {
 
-    @Autowired
     private ArticleService articleService;
+
+    public ArticlesController(ArticleService articleService) {
+        this.articleService = articleService;
+    }
 
     @GetMapping(value = "/articles", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Article>> getArticles(@RequestParam(name = "author", required = false) String author) {
